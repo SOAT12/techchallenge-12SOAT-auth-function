@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'authentication-app
+
+  Sample SAM Template for authentication-app
+
+  '
+Globals:
+  Function:
+    Timeout: 20
+    MemorySize: 512
+    LoggingConfig:
+      LogFormat: JSON
+Resources:
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: AuthFunction
+      Handler: auth.App::handleRequest
+      Runtime: java21
+      Architectures:
+      - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          PARAM1: VALUE
+      Events:
+        GenerateToken:
+          Type: Api
+          Properties:
+            Path: /token
+            Method: post
+    Metadata:
+      SamResourceId: AuthFunction
+Outputs:
+  AuthFunctionApi:
+    Description: API Gateway endpoint URL for Prod stage for auth function
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/token/
+  AuthFunction:
+    Description: Auth Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - AuthFunction
+      - Arn
+  AuthFunctionIamRole:
+    Description: Implicit IAM Role created for auth function
+    Value:
+      Fn::GetAtt:
+      - AuthFunctionRole
+      - Arn
