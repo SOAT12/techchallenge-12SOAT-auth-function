@@ -8,6 +8,7 @@ import auth.exception.BadRequestException;
 import auth.exception.ForbiddenException;
 import auth.service.AuthService;
 import auth.service.JwtService;
+import auth.service.ServiceOrderService;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
@@ -28,7 +29,8 @@ public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatew
 
     public App() {
         JwtService jwtService = new JwtService();
-        this.authService = new AuthService(jwtService);
+        ServiceOrderService serviceOrderService = new ServiceOrderService();
+        this.authService = new AuthService(jwtService, serviceOrderService);
     }
 
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent input, final Context context) {
