@@ -8,10 +8,11 @@ import auth.exception.ForbiddenException;
 public class AuthService {
 
     private final JwtService jwtService;
-    private ServiceOrderService serviceOrderService;
+    private final ServiceOrderService serviceOrderService;
 
-    public AuthService(JwtService jwtService) {
+    public AuthService(JwtService jwtService, ServiceOrderService serviceOrderService) {
         this.jwtService = jwtService;
+        this.serviceOrderService = serviceOrderService;
     }
 
     public LoginResponseDto generateAuthToken(LoginRequestDto requestDto) {
@@ -21,9 +22,9 @@ public class AuthService {
             throw new BadRequestException("Documento inválido");
         }
 
-//        if (!serviceOrderService.hasActiveServiceOrder(document)) {
-//            throw new ForbiddenException("Cliente não possui OS ativa");
-//        }
+        if (!serviceOrderService.hasActiveServiceOrder(document)) {
+            throw new ForbiddenException("Cliente não possui OS ativa");
+        }
 
         String token = jwtService.generateToken(document);
         return new LoginResponseDto(token);

@@ -36,7 +36,7 @@ Outputs:
   AuthFunctionApi:
     Description: API Gateway endpoint URL for Prod stage for auth function
     Value:
-      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/token/
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/token
   AuthFunction:
     Description: Auth Lambda Function ARN
     Value:
