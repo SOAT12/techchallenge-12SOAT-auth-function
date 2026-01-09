@@ -36,6 +36,7 @@ jobs:
           aws-region: us-east-1
 
       - name: SAM Deploy
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           sam deploy \
             --stack-name auth-lambda-stack \
