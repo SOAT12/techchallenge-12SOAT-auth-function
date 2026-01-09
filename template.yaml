@@ -41,6 +41,34 @@ Resources:
             Path: /token
             Method: post
 
+  AlbProxyResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ServerlessRestApi
+      ParentId: !GetAtt ServerlessRestApi.RootResourceId
+      PathPart: '{proxy+}'
+
+  AlbProxyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ServerlessRestApi
+      ResourceId: !Ref AlbProxyResource
+      HttpMethod: ANY
+      AuthorizationType: NONE # Mude para CUSTOM se for usar Authorizer depois
+      RequestParameters:
+        method.request.path.proxy: true
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: ANY
+        # -------------------------------------------------------
+        # ATENÇÃO: COLOQUE O DNS DO SEU ALB ABAIXO
+        # Mantenha o /{proxy} no final para repassar o caminho
+        # -------------------------------------------------------
+        Uri: http://k8s-techchal-techchal-dc7b268a61-1403715218.us-east-1.elb.amazonaws.com/{proxy}
+        RequestParameters:
+          integration.request.path.proxy: method.request.path.proxy
+        PassthroughBehavior: WHEN_NO_MATCH
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
@@ -54,3 +82,6 @@ Outputs:
   AuthFunctionIamRole:
     Description: Implicit IAM Role created for auth function
     Value: !GetAtt AuthFunctionRole.Arn
+  ProxyEndpoint:
+    Description: Endpoint do Proxy para o ALB
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/{proxy}"
