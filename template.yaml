@@ -5,18 +5,23 @@ Description: >
 
   Sample SAM Template for authentication-app
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 20
     MemorySize: 512
-
-    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
       LogFormat: JSON
+
 Resources:
+  # 1. Definição EXPLÍCITA da API (Automatiza o Deploy)
+  MyRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+
+  # 2. Função Lambda vinculada à API acima
   AuthFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: AuthFunction
       Handler: auth.App::handleRequest
@@ -24,7 +29,7 @@ Resources:
       Architectures:
       - x86_64
       MemorySize: 512
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+      Environment:
         Variables:
           PARAM1: VALUE
       Policies:
@@ -36,22 +41,24 @@ Resources:
                 - arn:aws:secretsmanager:us-east-1:258531703731:secret:techchallenge-db-credentials*
       Events:
         GenerateToken:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /token
             Method: post
+            RestApiId: !Ref MyRestApi
 
+  # 3. Recursos de Proxy (Vinculados à MyRestApi)
   AlbProxyResource:
     Type: AWS::ApiGateway::Resource
     Properties:
-      RestApiId: !Ref ServerlessRestApi
-      ParentId: !GetAtt ServerlessRestApi.RootResourceId
+      RestApiId: !Ref MyRestApi
+      ParentId: !GetAtt MyRestApi.RootResourceId
       PathPart: '{proxy+}'
 
   AlbProxyMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      RestApiId: !Ref ServerlessRestApi
+      RestApiId: !Ref MyRestApi
       ResourceId: !Ref AlbProxyResource
       HttpMethod: ANY
       AuthorizationType: NONE # Mude para CUSTOM se for usar Authorizer depois
@@ -70,12 +77,9 @@ Resources:
         PassthroughBehavior: WHEN_NO_MATCH
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   AuthFunctionApi:
     Description: API Gateway endpoint URL for Prod stage for auth function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/token"
+    Value: !Sub "https://${MyRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/token"
   AuthFunction:
     Description: Auth Lambda Function ARN
     Value: !GetAtt AuthFunction.Arn
@@ -84,4 +88,4 @@ Outputs:
     Value: !GetAtt AuthFunctionRole.Arn
   ProxyEndpoint:
     Description: Endpoint do Proxy para o ALB
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/{proxy}"
+    Value: !Sub "https://${MyRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/"
